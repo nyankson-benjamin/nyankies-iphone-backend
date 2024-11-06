@@ -23,5 +23,11 @@ app.use(cors());
 app.use('/api', productRoutes);
 app.use('/api/auth', authRoutes);
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Export the Express app as a serverless function
+module.exports = app;
+
+// Only listen to port if running locally
+if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
