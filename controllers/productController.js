@@ -25,3 +25,8 @@ exports.getProducts = async (req, res) => {
     res.status(500).json({ message: 'Error fetching products', error });
   }
 };
+
+// add product 
+exports.addProductDetails = async (req, res) => {
+  console.log(req.body);
+};

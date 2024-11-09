@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const connectDB = require('./config/db');
 const productRoutes = require('./routes/productRoutes');
 const authRoutes = require('./routes/authRoutes');
+const axios = require('axios');
 
 require('dotenv').config();
 const cors = require("cors");
@@ -23,6 +24,15 @@ app.use(cors());
 app.use('/api', productRoutes);
 app.use('/api/auth', authRoutes);
 
+app.post('/api/device-details', async (req, res) => {
+    console.log(req.body);
+    try {
+      const response = await axios.post(process.env.GSM_URL, req.body);
+      res.json(response.data);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
 // Export the Express app as a serverless function
 module.exports = app;
 
