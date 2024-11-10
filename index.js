@@ -15,7 +15,8 @@ const app = express();
 connectDB();
 
 // Middleware
-app.use(bodyParser.json());
+app.use(bodyParser.json({limit: '50mb'}));
+app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 app.use('/uploads', express.static('uploads')); // Serve static files from 'uploads' folder
 app.use(express.urlencoded({ extended: true }));
 
