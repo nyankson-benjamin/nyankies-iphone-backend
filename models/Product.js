@@ -11,7 +11,8 @@ const productSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
   isActive: { type: Boolean, default: true },
   images: { type: Array },
-  details:{type:Object}
+  details:{type:Object},
+  title:{type:String},
 
 });
 

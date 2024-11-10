@@ -13,7 +13,17 @@ cloudinary.config({
 exports.getProducts = async (req, res) => {
   try {
     const products = await Product.find();
-    res.json(products);
+    const itemsTosSend = products.map(product => ({
+      _id:product._id,
+      title:product.title,
+      price:product.price,
+      brand:product.brand,
+      description:product.description,
+      category:product.category,
+      stock:product.stock,
+      images: product.images.map(img => img.url)
+    }));
+    res.json(itemsTosSend);
   } catch (error) {
     res.status(500).json({ message: "Error fetching products", error });
   }
@@ -47,8 +57,20 @@ exports.addProductDetails = async (req, res) => {
       images: uploadedImages
     });
     
+    
     await newProduct.save();
-    res.status(201).json(newProduct);
+    const itemsTosSend = {
+     
+      // images: uploadedImages,
+      _id:newProduct._id,
+      title:newProduct.title,
+      price:newProduct.price,
+      brand:newProduct.brand,
+      description:newProduct.description,
+      category:newProduct.category,
+      // stock:newProduct.stock
+    } 
+    res.status(201).json(itemsTosSend);
   } catch (error) {
     res.status(500).json({ message: "Error adding product", error });
   }
@@ -80,4 +102,20 @@ exports.deleteProduct = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Error deleting product", error });
   }
+};
+
+// get product by category
+exports.getProductByCategory = async (req, res) => {
+  const { category } = req.params;
+  const products = await Product.find({ category });
+  const itemsTosSend = products.map(product => ({
+    _id:product._id,
+    title:product.title,
+    price:product.price,
+    brand:product.brand,
+    description:product.description,
+    category:product.category,
+    images: product.images.map(img => img.url)
+  }));
+  res.json(itemsTosSend);
 };
