@@ -1,6 +1,7 @@
 // controllers/productController.js
 const Product = require("../models/Product");
 const cloudinary = require('cloudinary').v2;
+const Order = require("../models/Order.js");
 
 // Configure Cloudinary
 cloudinary.config({
@@ -119,3 +120,62 @@ exports.getProductByCategory = async (req, res) => {
   }));
   res.json(itemsTosSend);
 };
+
+//checkout
+exports.checkout = async (req, res) => {
+  try {
+    const { products, userId, totalAmount, shippingAddress } = req.body;
+    
+    // Create new order
+    const order = new Order({
+      userId,
+      products,
+      totalAmount,
+      address: shippingAddress.address,
+      phone: shippingAddress.phone,
+      location: shippingAddress.location,
+      status: 'pending'
+    });
+
+    await order.save();
+    
+    // Update product stock
+    const updatePromises = products.map(product =>
+      Product.findByIdAndUpdate(
+        product._id,
+        { $inc: { stock: -product.quantity } },
+        { new: true }
+      )
+    );
+    await Promise.all(updatePromises);
+
+    res.json({ 
+      message: "Order placed successfully", 
+      orderId: order._id 
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error processing checkout", error });
+  }
+};
+
+//get orders
+exports.getOrders = async (req, res) => {
+  const orders = await Order.find();
+  res.json(orders);
+};
+
+//get order by id
+exports.getOrderById = async (req, res) => {
+  const { _id } = req.params;
+  const order = await Order.findById(_id);
+  res.json(order);
+};
+
+//get orders by user id
+exports.getOrdersByUserId = async (req, res) => {
+  const { userId } = req.params;
+  const orders = await Order.find({ userId });
+  res.json(orders);
+};
+
+// pay
