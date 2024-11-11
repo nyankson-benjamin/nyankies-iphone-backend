@@ -10,6 +10,10 @@ const orderSchema = new mongoose.Schema({
   address: String,
   phone: String,
   location: String,
+  email: String,
+  name: String,
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
 });
 
 const Order = mongoose.model("Order", orderSchema);

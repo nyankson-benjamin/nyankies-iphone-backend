@@ -2,7 +2,7 @@
 const Product = require("../models/Product");
 const cloudinary = require('cloudinary').v2;
 const Order = require("../models/Order.js");
-
+const User = require("../models/User.js");
 // Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -126,6 +126,7 @@ exports.checkout = async (req, res) => {
   try {
     const { products, userId, totalAmount, shippingAddress } = req.body;
     
+    const user = await User.findById(userId);
     // Create new order
     const order = new Order({
       userId,
@@ -134,7 +135,9 @@ exports.checkout = async (req, res) => {
       address: shippingAddress.address,
       phone: shippingAddress.phone,
       location: shippingAddress.location,
-      status: 'pending'
+      status: 'pending',
+      name: user.name,
+      email: user.email,
     });
 
     await order.save();
