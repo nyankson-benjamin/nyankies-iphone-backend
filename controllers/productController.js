@@ -3,6 +3,7 @@ const Product = require("../models/Product");
 const cloudinary = require('cloudinary').v2;
 const Order = require("../models/Order.js");
 const User = require("../models/User.js");
+const logger = require('../config/logger');
 // Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -152,11 +153,26 @@ exports.checkout = async (req, res) => {
     );
     await Promise.all(updatePromises);
 
+    // Log successful checkout
+    logger.info('Checkout successful', {
+      orderId: order._id,
+      userId,
+      totalAmount,
+      products: products.map(p => ({ id: p._id, quantity: p.quantity }))
+    });
+
     res.json({ 
       message: "Order placed successfully", 
       orderId: order._id 
     });
   } catch (error) {
+    // Log checkout failure
+    logger.error('Checkout failed', {
+      userId: req.body.userId,
+      error: error.message,
+      stack: error.stack
+    });
+
     res.status(500).json({ message: "Error processing checkout", error });
   }
 };
