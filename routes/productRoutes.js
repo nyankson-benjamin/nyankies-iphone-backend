@@ -7,6 +7,9 @@ const {
   getProductByCategory,
   deleteProduct,
   checkout,
+  getOrders,
+  getOrderById,
+  getOrdersByUserId,
 } = require("../controllers/productController");
 
 const router = express.Router();
@@ -18,5 +21,8 @@ router.get("/product/:_id", getProductById);
 router.get("/categories/:category", getProductByCategory);
 router.delete("/product/:_id", deleteProduct);
 router.post("/checkout", checkout);
+router.get("/orders", getOrders);
+router.get("/order/:_id", getOrderById);
+router.get("/orders/:userId", getOrdersByUserId);
 
 module.exports = router;
