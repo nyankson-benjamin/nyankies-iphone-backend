@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const connectDB = require('./config/db');
 const productRoutes = require('./routes/productRoutes');
 const authRoutes = require('./routes/authRoutes');
+const usersRoutes = require('./routes/usersRoutes');
 const axios = require('axios');
 
 require('dotenv').config();
@@ -24,7 +25,7 @@ app.use(cors());
 // Routes
 app.use('/api', productRoutes);
 app.use('/api/auth', authRoutes);
-
+app.use('/api/users', usersRoutes);
 app.post('/api/device-details', async (req, res) => {
     console.log(req.body);
     try {
