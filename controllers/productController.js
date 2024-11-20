@@ -4,12 +4,9 @@ const cloudinary = require('cloudinary').v2;
 const Order = require("../models/Order.js");
 const User = require("../models/User.js");
 const logger = require('../config/logger');
+const {cloudinaryConfig} = require("../cloudinary.js")
 // Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
+cloudinary.config(cloudinaryConfig);
 
 // Get all products
 exports.getProducts = async (req, res) => {
