@@ -3,28 +3,34 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
+const cloudinary = require("cloudinary").v2;
+const { cloudinaryConfig } = require("../cloudinary.js");
+const Profile = require("../models/ProfileImages");
+cloudinary.config(cloudinaryConfig);
 
 // Sign up a new user
 exports.signup = async (req, res) => {
-  const { username, email, password, name, phone, location, address } = req.body;
+  const { username, email, password, name, phone, location, address } =
+    req.body;
 
   try {
     // Check if email or phone is already in use
     const existingUser = await User.findOne({
       $or: [{ email }, { phone }],
     });
-    
+
     if (existingUser) {
       // Customize error message based on which field already exists
-      const message = existingUser.email === email
-        ? "Email is already registered."
-        : "Phone number is already registered.";
+      const message =
+        existingUser.email === email
+          ? "Email is already registered."
+          : "Phone number is already registered.";
       return res.status(400).json({ message });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const confirmationToken = jwt.sign({ email }, process.env.JWT_SECRET, {
-      expiresIn: "1d",
+      expiresIn: process.env.JWT_EXPIRES_IN,
     });
 
     const newUser = new User({
@@ -78,12 +84,13 @@ exports.signup = async (req, res) => {
       `,
     });
 
-    res.status(201).json({ message: "User created. Please confirm your email." });
+    res
+      .status(201)
+      .json({ message: "User created. Please confirm your email." });
   } catch (error) {
     res.status(500).json({ message: "Error signing up", error });
   }
 };
-
 
 // Confirm user account
 exports.confirmAccount = async (req, res) => {
@@ -119,13 +126,36 @@ exports.login = async (req, res) => {
     if (!isMatch)
       return res.status(401).json({ message: "Invalid credentials" });
 
-    const token = jwt.sign(
-      { _id: user._id, email: user.email, role:user.role, name:user.name, phone:user.phone, location:user.location, address:user.address },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN }
-    );
+    const userObject = {
+      _id: user._id,
+      email: user.email,
+      role: user.role,
+      name: user.name,
+      phone: user.phone,
+      location: user.location,
+      address: user.address,
+      profile_image:null
+    };
+    const profile = await Profile.findOne({ userId: user._id });
+    if (!profile) {
+      const token = jwt.sign(userObject, process.env.JWT_SECRET, {
+        expiresIn: process.env.JWT_EXPIRES_IN,
+      });
 
-    res.json({ token });
+      res.json({ token });
+    }
+
+    else{
+      const newUserObject = {...userObject, profile_image:profile.image.image }
+      const token = jwt.sign(
+       newUserObject,
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRES_IN }
+      );
+  
+      res.json({ token });
+    }
+    
   } catch (error) {
     res.status(500).json({ message: "Error logging in", error });
   }
@@ -207,5 +237,55 @@ exports.resetPassword = async (req, res) => {
     res.json({ message: "Password updated successfully!" });
   } catch (error) {
     res.status(400).json({ message: "Invalid or expired token" });
+  }
+};
+
+exports.updateProfileImage = async (req, res) => {
+  const { image, userId } = req.body;
+  // Define the upload function
+  const uploadImage = async () => {
+    // Upload image to Cloudinary
+    const result = await cloudinary.uploader.upload(image, {
+      folder: "user_profiles", // Optional: organize images in folders
+      resource_type: "auto",
+    });
+
+    return {
+      id: userId,
+      image: result.secure_url,
+      public_id: result.public_id,
+    };
+  };
+
+  try {
+    // Call the upload function and wait for the result
+    const uploadedImage = await uploadImage();
+
+    // Check if a profile image entry already exists for the user
+    const existingProfile = await Profile.findOne({ userId });
+
+    if (existingProfile) {
+      // Update the existing profile image entry
+      existingProfile.image = (uploadedImage); // Add new image to the array
+      await existingProfile.save();
+    } else {
+      // Create new profile image entry with the uploaded image URL
+      const newImage = new Profile({
+        userId,
+        image: uploadedImage, // Store the uploaded image in an array
+      });
+
+      await newImage.save();
+    }
+
+    // Send success response
+    res
+      .status(201)
+      .json({
+        message: "Profile image updated successfully!",
+        image: uploadedImage,
+      });
+  } catch (error) {
+    res.status(500).json({ message: "Error updating profile image", error });
   }
 };

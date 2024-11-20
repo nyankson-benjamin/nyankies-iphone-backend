@@ -6,6 +6,7 @@ const {
   login,
   recoverPassword,
   resetPassword,
+  updateProfileImage
 } = require('../controllers/authController');
 
 const router = express.Router();
@@ -24,5 +25,6 @@ router.post('/recover', recoverPassword);
 
 // Reset password route
 router.post('/reset', resetPassword);
+router.post("/update_profile_mage",updateProfileImage)
 
 module.exports = router;
